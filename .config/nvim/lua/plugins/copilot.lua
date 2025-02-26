@@ -1,51 +1,23 @@
 return {
   "zbirenbaum/copilot.lua",
   cmd = "Copilot",
+  build = ":Copilot auth",
   event = "InsertEnter",
-  config = function()
-    require("copilot").setup({
-      panel = {
-      enabled = false,
-      auto_refresh = false,
-      keymap = {
-        jump_prev = "[[",
-        jump_next = "]]",
-        accept = "<CR>",
-        refresh = "gr",
-        open = "<M-CR>"
-      },
-      layout = {
-        position = "bottom", -- | top | left | right
-        ratio = 0.4
-      },
-    },
+  opts = {
     suggestion = {
-      enabled = true,
-      auto_trigger = false,
-      hide_during_completion = true,
-      debounce = 75,
+      enabled = not vim.g.ai_cmp,
+      auto_trigger = true,
       keymap = {
-        accept = "<M-l>",
-        accept_word = false,
-        accept_line = false,
+        accept = false, -- handled by nvim-cmp / blink.cmp
         next = "<M-]>",
         prev = "<M-[>",
-        dismiss = "<C-]>",
       },
     },
+    panel = { enabled = false },
     filetypes = {
       yaml = true,
-      markdown = false,
-      help = false,
-      gitcommit = false,
-      gitrebase = false,
-      hgcommit = false,
-      svn = false,
-      cvs = false,
-      ["."] = false,
+      markdown = true,
+      help = true,
     },
-    copilot_node_command = 'node', -- Node.js version must be > 18.x
-    server_opts_overrides = {},
-  })
-  end,
+  },
 }
