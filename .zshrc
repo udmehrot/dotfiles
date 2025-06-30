@@ -83,7 +83,7 @@ alias vim='nvim'
 alias c='clear'
 alias bat='batcat'
 
-alias dot='/usr/bin/git --git-dir=$HOME/dotfiles --work-tree=/home/udmehrot'
+alias dot='/usr/bin/git --git-dir=$HOME/dotfiles --work-tree=$HOME'
 
 # Custom Path 
 if [ -d "$HOME/bin" ] ; then
