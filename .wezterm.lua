@@ -66,7 +66,7 @@ config.keys = {
 	{
 		key = "-",
 		mods = "CTRL|ALT|SUPER",
-		actio = wezterm.action.SplitVertical({ domain = "CurrentPaneDomain" }),
+		action = wezterm.action.SplitVertical({ domain = "CurrentPaneDomain" }),
 	},
 
 	-- Pane navigation (vim-style)
@@ -213,8 +213,8 @@ config.keys = {
 
 -- Optional: Visual improvements for pane management
 config.inactive_pane_hsb = {
-	saturation = 0.7,
-	brightness = 0.6,
+	saturation = 0.8,
+	brightness = 0.7,
 }
 
 -- Optional: Add padding since we removed system decorations
