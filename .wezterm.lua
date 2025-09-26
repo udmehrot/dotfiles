@@ -1,6 +1,6 @@
 -- Pull in the wezterm API
 local wezterm = require("wezterm")
-local theme = wezterm.plugin.require("https://github.com/neapsix/wezterm").main
+local theme = wezterm.plugin.require("https://github.com/neapsix/wezterm").moon
 
 -- This will hold the configuration.
 local config = wezterm.config_builder()
@@ -22,7 +22,7 @@ config.enable_wayland = true -- Explicitly enable Wayland support
 config.use_fancy_tab_bar = false -- Use tab bar as title bar replacement
 -- config.window_decorations = "INTEGRATED_BUTTONS|RESIZE"
 config.window_decorations = "NONE"
-config.window_background_opacity = 0.80
+config.window_background_opacity = 0.70
 config.text_background_opacity = 1.0
 config.kde_window_background_blur = true
 
