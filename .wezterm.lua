@@ -12,8 +12,8 @@ local config = wezterm.config_builder()
 config.colors = theme.colors()
 config.window_frame = theme.window_frame()
 
-config.font = wezterm.font("Iosevka Nerd Font")
-config.font_size = 14
+config.font = wezterm.font("Ioskeley Mono")
+config.font_size = 15
 
 config.enable_tab_bar = false
 
@@ -175,7 +175,7 @@ config.keys = {
 
 	-- New window
 	{
-		key = "Enter",
+		key = "n",
 		mods = "CTRL|ALT|SUPER",
 		action = wezterm.action.SpawnWindow,
 	},
