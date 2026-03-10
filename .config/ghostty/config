@@ -1,6 +1,7 @@
 # Appearance
-theme = rose-pine
+theme = Rose Pine Moon
 font-size = 12
+font-family = Ioskeley Mono
 background-opacity =0.70
 background-blur-radius = 50
 font-thicken = true
@@ -19,3 +20,36 @@ link-url = true
 #Keybindings
 keybind = global:ctrl+grave_accent=toggle_quick_terminal
 keybind = global:ctrl+space=toggle_quick_terminal
+
+# Window Settings
+window-padding-x = 8
+window-padding-y = 8
+window-decoration = none
+fps-limit = 144
+render-gpu = auto
+
+# Wayland Configuration
+linux-display-server = wayland
+gtk-single-instance = true
+
+# tmux Auto-start
+command = tmux new-session -A -s main
+
+# Keybindings - Tab Navigation
+keybind = ctrl+alt+shift+super+one=goto_tab:1
+keybind = ctrl+alt+shift+super+two=goto_tab:2
+keybind = ctrl+alt+shift+super+three=goto_tab:3
+keybind = ctrl+alt+shift+super+four=goto_tab:4
+keybind = ctrl+alt+shift+super+five=goto_tab:5
+
+# Keybindings - Copy/Paste
+keybind = ctrl+alt+shift+super+c=copy_to_clipboard
+keybind = ctrl+alt+shift+super+v=paste_from_clipboard
+
+# Keybindings - Tab/Window Management
+keybind = ctrl+alt+shift+super+t=new_tab
+keybind = ctrl+alt+shift+super+n=new_window
+
+# Keybindings - Display
+keybind = ctrl+alt+shift+super+enter=toggle_fullscreen
+keybind = ctrl+alt+shift+super+x=text:\x0c

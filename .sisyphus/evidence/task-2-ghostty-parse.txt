@@ -1,0 +1,2 @@
+=== TEST 1: Config Syntax Check ===
+Exit code: 1

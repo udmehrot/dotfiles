@@ -1,0 +1,11 @@
+=== TEST 3: tmux Auto-start Check ===
+command = tmux new-session -A -s main
+✓ tmux auto-start configured
+
+All configured settings:
+window-padding-x = 8
+window-padding-y = 8
+window-decoration = none
+fps-limit = 144
+linux-display-server = wayland
+gtk-single-instance = true

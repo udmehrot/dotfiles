@@ -1,0 +1,8 @@
+=== Config Backup ===
+Original config backed up at: ~/.config/ghostty/config.backup
+
+Backup file size:
+-rw-rw-r-- 1 udmehrot udmehrot 484 Mar  9 20:42 /home/udmehrot/.config/ghostty/config.backup
+
+Updated config size:
+-rw-rw-r-- 1 udmehrot udmehrot 1.4K Mar  9 20:43 /home/udmehrot/.config/ghostty/config

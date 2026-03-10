@@ -1,0 +1,17 @@
+=== TEST 2: Keybindings Check ===
+Checking new_tab keybinding:
+keybind = ctrl+alt+shift+super+t=new_tab
+✓ new_tab found
+
+Checking copy_to_clipboard keybinding:
+keybind = ctrl+alt+shift+super+c=copy_to_clipboard
+✓ copy_to_clipboard found
+
+Checking paste_from_clipboard keybinding:
+keybind = ctrl+alt+shift+super+v=paste_from_clipboard
+✓ paste_from_clipboard found
+
+Checking window-padding settings:
+window-padding-x = 8
+window-padding-y = 8
+✓ window-padding found
