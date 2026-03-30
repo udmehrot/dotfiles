@@ -1,209 +1,226 @@
 -- Pull in the wezterm API
 local wezterm = require("wezterm")
-local theme = wezterm.plugin.require("https://github.com/neapsix/wezterm").moon
 
 -- This will hold the configuration.
 local config = wezterm.config_builder()
 
--- This is where you actually apply your config choices
+-- Current colorscheme
+config.color_scheme = "Catppuccin Mocha"
 
--- current colorscheme
--- config.color_scheme = "Rose-Pine"
-config.colors = theme.colors()
-config.window_frame = theme.window_frame()
+-- Font configuration with Nerd Font fallback
+config.font = wezterm.font_with_fallback({
+	"Ioskeley Mono",
+	"Symbols Nerd Font Mono",
+	"JetBrainsMono Nerd Font",
+})
+config.font_size = 12
 
-config.font = wezterm.font("Ioskeley Mono")
-config.font_size = 15
-
-config.enable_tab_bar = false
-
--- Wayland-specific window styling
-config.enable_wayland = true -- Explicitly enable Wayland support
-config.use_fancy_tab_bar = false -- Use tab bar as title bar replacement
--- config.window_decorations = "INTEGRATED_BUTTONS|RESIZE"
-config.window_decorations = "NONE"
+-- UI Styling
 config.window_background_opacity = 0.70
 config.text_background_opacity = 1.0
+config.window_padding = { left = 8, right = 8, top = 8, bottom = 8 }
+config.window_decorations = "NONE"
 config.kde_window_background_blur = true
 
--- Enable blur support (requires compositor support)
-
--- KDE Wayland optimizations
-config.front_end = "WebGpu" -- Better performance on Wayland
-config.webgpu_power_preference = "HighPerformance" -- Use discrete GPU if available
-
--- Wayland-specific rendering improvements
-config.enable_kitty_graphics = true -- Better image support
--- config.term = "wezterm" -- Proper terminal identification
-
--- Tab bar settings
+-- Tab Bar Settings
+config.enable_tab_bar = true
+config.use_fancy_tab_bar = false
 config.hide_tab_bar_if_only_one_tab = true
 config.tab_bar_at_bottom = true
-config.enable_tab_bar = true
 
--- KDE integration improvements
-config.window_close_confirmation = "NeverPrompt" -- Let KDE handle confirmations
-config.check_for_updates = false -- Disable if using system package manager
+-- Function to extract basename from a path
+local function basename(s)
+	return string.gsub(s, "(.*[/\\])(.*)", "%2")
+end
 
--- Clipboard integration for Wayland
+-- Helper to get the real process name
+local function get_process_name(pane)
+	local process_info = pane:get_foreground_process_info()
+	if not process_info then
+		return pane:get_title()
+	end
+
+	local name = basename(process_info.executable)
+
+	-- Handle sudo
+	if name == "sudo" then
+		for i, arg in ipairs(process_info.argv) do
+			if i > 1 and not arg:find("^-") then
+				name = basename(arg)
+				break
+			end
+		end
+	end
+
+	-- Handle node/npx
+	if name == "node" then
+		for i, arg in ipairs(process_info.argv) do
+			if i > 1 and arg:find("%.js$") then
+				name = basename(arg):gsub("%.js$", "")
+				break
+			elseif i > 1 and not arg:find("^-") then
+				name = basename(arg)
+				break
+			end
+		end
+	end
+
+	-- Handle snap
+	if name == "snap" and #process_info.argv > 1 then
+		name = basename(process_info.argv[2])
+	end
+
+	-- Handle specialized snap paths (e.g., /snap/bin/nvim)
+	if process_info.executable:find("^/snap/") then
+		name = basename(process_info.executable)
+	end
+
+	return name
+end
+
+-- Mapping of process names to icons
+local function get_process_icon(process_name)
+	local icons = {
+		["nvim"] = "",
+		["vim"] = "",
+		["zsh"] = "",
+		["bash"] = "",
+		["sh"] = "",
+		["node"] = "",
+		["python"] = "",
+		["python3"] = "",
+		["git"] = "󰊢",
+		["ssh"] = "󰣀",
+		["sudo"] = "󰒲",
+		["docker"] = "󰡨",
+		["docker-compose"] = "󰡨",
+		["cargo"] = "",
+		["go"] = "",
+		["npm"] = "",
+		["yarn"] = "",
+		["pnpm"] = "",
+		["gh"] = "",
+		["top"] = "",
+		["htop"] = "",
+		["btm"] = "",
+		["yazi"] = "󱗆",
+	}
+	return icons[process_name] or "󰆍"
+end
+
+-- Custom tab title: [icon] [index]: [command] with Powerline arrows
+wezterm.on("format-tab-title", function(tab, tabs, panes, config, hover, max_width)
+	local background = "#313244" -- Surface0
+	local foreground = "#cdd6f4" -- Text
+	local edge_background = "#1e1e2e" -- Base (Bar background)
+
+	if tab.is_active then
+		background = "#89b4fa" -- Blue
+		foreground = "#11111b" -- Crust
+	elseif hover then
+		background = "#45475a" -- Surface1
+		foreground = "#cdd6f4"
+	end
+
+	local edge_foreground = background
+	local process_name = get_process_name(tab.active_pane)
+	local icon = get_process_icon(process_name)
+	local title = (process_name == "" or process_name == "zsh") and tab.active_pane.title or process_name
+
+	-- Handle the special case where title might be the same as the shell
+	if title == "zsh" then
+		title = "term"
+	end
+
+	return {
+		{ Background = { Color = background } },
+		{ Foreground = { Color = foreground } },
+		{ Text = " " .. icon .. " " .. (tab.tab_index + 1) .. ": " .. title .. " " },
+		{ Background = { Color = edge_background } },
+		{ Foreground = { Color = edge_foreground } },
+		{ Text = "" }, -- SOLID_RIGHT_ARROW
+	}
+end)
+
+-- Dynamic Status (Right side of tab bar)
+wezterm.on("update-right-status", function(window, pane)
+	local date = wezterm.strftime("%H:%M  %d-%b ")
+	local workspace = window:active_workspace()
+	window:set_right_status(wezterm.format({
+		{ Foreground = { AnsiColor = "Fuchsia" } },
+		{ Text = "󱂬  " .. workspace .. "  " },
+		{ Foreground = { AnsiColor = "White" } },
+		{ Text = "󱑒  " .. date },
+	}))
+end)
+
+-- Performance & Wayland Optimizations
+config.enable_wayland = true
+config.front_end = "WebGpu"
+config.webgpu_power_preference = "HighPerformance"
+config.max_fps = 144
+config.enable_kitty_graphics = true
+config.alternate_buffer_wheel_scroll_speed = 3
+config.scrollback_lines = 10000
+
+-- Interaction Settings
+config.window_close_confirmation = "NeverPrompt"
+config.check_for_updates = false
 config.selection_word_boundary = " \t\n{}[]()\"'`,;:│=&!%"
 
--- Better scrolling on Wayland
-config.alternate_buffer_wheel_scroll_speed = 3
-
--- KDE-friendly keybindings (optional)
--- timeout_milliseconds defaults to 1000 and can be omitted
+-- Keybindings
+local hyper = "CTRL|ALT|SUPER"
 config.leader = { key = "F13", mods = "", timeout_milliseconds = 1000 }
 
--- Pane management keybindings using Hyper key (CTRL+ALT+SUPER+SHIFT)
 config.keys = {
-	-- Pane splitting
-	{
-		key = "\\",
-		mods = "CTRL|ALT|SUPER",
-		action = wezterm.action.SplitHorizontal({ domain = "CurrentPaneDomain" }),
-	},
-	{
-		key = "-",
-		mods = "CTRL|ALT|SUPER",
-		action = wezterm.action.SplitVertical({ domain = "CurrentPaneDomain" }),
-	},
+	-- Pane Management
+	{ key = "\\", mods = hyper, action = wezterm.action.SplitHorizontal({ domain = "CurrentPaneDomain" }) },
+	{ key = "-", mods = hyper, action = wezterm.action.SplitVertical({ domain = "CurrentPaneDomain" }) },
+	{ key = "h", mods = hyper, action = wezterm.action.ActivatePaneDirection("Left") },
+	{ key = "j", mods = hyper, action = wezterm.action.ActivatePaneDirection("Down") },
+	{ key = "k", mods = hyper, action = wezterm.action.ActivatePaneDirection("Up") },
+	{ key = "l", mods = hyper, action = wezterm.action.ActivatePaneDirection("Right") },
+	{ key = "H", mods = hyper, action = wezterm.action.AdjustPaneSize({ "Left", 5 }) },
+	{ key = "J", mods = hyper, action = wezterm.action.AdjustPaneSize({ "Down", 5 }) },
+	{ key = "K", mods = hyper, action = wezterm.action.AdjustPaneSize({ "Up", 5 }) },
+	{ key = "L", mods = hyper, action = wezterm.action.AdjustPaneSize({ "Right", 5 }) },
+	{ key = "w", mods = hyper, action = wezterm.action.CloseCurrentPane({ confirm = true }) },
+	{ key = "z", mods = hyper, action = wezterm.action.TogglePaneZoomState },
+	{ key = "r", mods = hyper, action = wezterm.action.RotatePanes("Clockwise") },
+	{ key = "R", mods = hyper, action = wezterm.action.RotatePanes("CounterClockwise") },
 
-	-- Pane navigation (vim-style)
-	{
-		key = "h",
-		mods = "CTRL|ALT|SUPER",
-		action = wezterm.action.ActivatePaneDirection("Left"),
-	},
-	{
-		key = "j",
-		mods = "CTRL|ALT|SUPER",
-		action = wezterm.action.ActivatePaneDirection("Down"),
-	},
-	{
-		key = "k",
-		mods = "CTRL|ALT|SUPER",
-		action = wezterm.action.ActivatePaneDirection("Up"),
-	},
-	{
-		key = "l",
-		mods = "CTRL|ALT|SUPER",
-		action = wezterm.action.ActivatePaneDirection("Right"),
-	},
+	-- Tab & Window Management
+	{ key = "t", mods = hyper, action = wezterm.action.SpawnTab("CurrentPaneDomain") },
+	{ key = "n", mods = hyper, action = wezterm.action.SpawnWindow },
+	{ key = "1", mods = hyper, action = wezterm.action.ActivateTab(0) },
+	{ key = "2", mods = hyper, action = wezterm.action.ActivateTab(1) },
+	{ key = "3", mods = hyper, action = wezterm.action.ActivateTab(2) },
+	{ key = "4", mods = hyper, action = wezterm.action.ActivateTab(3) },
+	{ key = "5", mods = hyper, action = wezterm.action.ActivateTab(4) },
 
-	-- Pane resizing (using Shift+letter for capital letters)
-	{
-		key = "H",
-		mods = "CTRL|ALT|SUPER",
-		action = wezterm.action.AdjustPaneSize({ "Left", 5 }),
-	},
-	{
-		key = "J",
-		mods = "CTRL|ALT|SUPER",
-		action = wezterm.action.AdjustPaneSize({ "Down", 5 }),
-	},
-	{
-		key = "K",
-		mods = "CTRL|ALT|SUPER",
-		action = wezterm.action.AdjustPaneSize({ "Up", 5 }),
-	},
-	{
-		key = "L",
-		mods = "CTRL|ALT|SUPER",
-		action = wezterm.action.AdjustPaneSize({ "Right", 5 }),
-	},
+	-- Font Scaling
+	{ key = "=", mods = hyper, action = wezterm.action.IncreaseFontSize },
+	{ key = "_", mods = hyper, action = wezterm.action.DecreaseFontSize },
+	{ key = "0", mods = hyper, action = wezterm.action.ResetFontSize },
 
-	-- Close current pane
-	{
-		key = "w",
-		mods = "CTRL|ALT|SUPER",
-		action = wezterm.action.CloseCurrentPane({ confirm = true }),
-	},
+	-- Search & Clipboard
+	{ key = "p", mods = hyper, action = wezterm.action.ActivateCommandPalette },
+	{ key = "f", mods = hyper, action = wezterm.action.Search({ CaseSensitiveString = "" }) },
+	{ key = "c", mods = hyper, action = wezterm.action.CopyTo("Clipboard") },
+	{ key = "v", mods = hyper, action = wezterm.action.PasteFrom("Clipboard") },
 
-	-- Zoom/unzoom pane
+	-- Utilities
 	{
-		key = "z",
-		mods = "CTRL|ALT|SUPER",
-		action = wezterm.action.TogglePaneZoomState,
-	},
-
-	-- Rotate panes
-	{
-		key = "r",
-		mods = "CTRL|ALT|SUPER",
-		action = wezterm.action.RotatePanes("Clockwise"),
-	},
-	{
-		key = "R",
-		mods = "CTRL|ALT|SUPER",
-		action = wezterm.action.RotatePanes("CounterClockwise"),
-	},
-
-	-- Create new tab
-	{
-		key = "t",
-		mods = "CTRL|ALT|SUPER",
-		action = wezterm.action.SpawnTab("CurrentPaneDomain"),
-	},
-
-	-- Tab navigation
-	{
-		key = "1",
-		mods = "CTRL|ALT|SUPER",
-		action = wezterm.action.ActivateTab(0),
-	},
-	{
-		key = "2",
-		mods = "CTRL|ALT|SUPER",
-		action = wezterm.action.ActivateTab(1),
-	},
-	{
-		key = "3",
-		mods = "CTRL|ALT|SUPER",
-		action = wezterm.action.ActivateTab(2),
-	},
-	{
-		key = "4",
-		mods = "CTRL|ALT|SUPER",
-		action = wezterm.action.ActivateTab(3),
-	},
-	{
-		key = "5",
-		mods = "CTRL|ALT|SUPER",
-		action = wezterm.action.ActivateTab(4),
-	},
-
-	-- New window
-	{
-		key = "n",
-		mods = "CTRL|ALT|SUPER",
-		action = wezterm.action.SpawnWindow,
-	},
-
-	-- Command palette
-	{
-		key = "p",
-		mods = "CTRL|ALT|SUPER",
-		action = wezterm.action.ActivateCommandPalette,
-	},
-	{
-		key = "f",
-		mods = "CTRL|ALT|SUPER",
-		action = wezterm.action.Search({ CaseSensitiveString = "" }),
-	},
-	{
-		key = "c",
-		mods = "CTRL|ALT|SUPER",
-		action = wezterm.action.CopyTo("Clipboard"),
-	},
-	{
-		key = "v",
-		mods = "CTRL|ALT|SUPER",
-		action = wezterm.action.PasteFrom("Clipboard"),
+		key = "y",
+		mods = hyper,
+		action = wezterm.action.SpawnCommandInNewTab({
+			args = { "yazi" },
+			domain = "CurrentPaneDomain",
+		}),
 	},
 	{
 		key = "x",
-		mods = "CTRL|ALT|SUPER",
+		mods = hyper,
 		action = wezterm.action.Multiple({
 			wezterm.action.ClearScrollback("ScrollbackAndViewport"),
 			wezterm.action.SendKey({ key = "L", mods = "CTRL" }),
@@ -211,24 +228,10 @@ config.keys = {
 	},
 }
 
--- Optional: Visual improvements for pane management
+-- Inactive pane dimming
 config.inactive_pane_hsb = {
 	saturation = 0.8,
-	brightness = 0.7,
+	brightness = 0.6,
 }
 
--- Optional: Add padding since we removed system decorations
-config.window_padding = {
-	left = 8,
-	right = 8,
-	top = 8,
-	bottom = 8,
-}
-
--- Performance optimizations for KDE Wayland
-config.max_fps = 144 -- Match your display refresh rate
-config.animation_fps = 60
-config.cursor_blink_rate = 500
-
--- and finally, return the configuration to wezterm
 return config
